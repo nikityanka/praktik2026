@@ -345,38 +345,3 @@ CMD ["python", "main.py"]
 
 MIT - все проекты можно свободно использовать, модифицировать и распространять.
 
-## Дополнительные ресурсы
-
-### Документация
-
-- [Google Gemini API](https://ai.google.dev/docs)
-- [GitHub API](https://docs.github.com/en/rest)
-- [Telegram Bot API](https://core.telegram.org/bots/api)
-
-### Обучение
-
-- [Prompt Engineering Guide](https://www.promptingguide.ai/)
-- [LangChain Documentation](https://python.langchain.com/)
-- [RAG Tutorial](https://www.pinecone.io/learn/retrieval-augmented-generation/)
-
-### Сообщество
-
-- [r/LocalLLaMA](https://reddit.com/r/LocalLLaMA)
-- [AI Stack Exchange](https://ai.stackexchange.com/)
-- [Hugging Face Forums](https://discuss.huggingface.co/)
-
-## Поддержка
-
-Если у вас возникли вопросы или проблемы:
-1. Проверьте README конкретного проекта
-2. Убедитесь, что API ключи установлены правильно
-3. Проверьте лимиты API
-4. Посмотрите примеры использования в README
-
----
-
-**Дата создания:** 6 мая 2026  
-**Версия:** 1.0  
-**Автор:** OpenCode AI Assistant
-
-Удачи в изучении разработки с ИИ! 🚀
