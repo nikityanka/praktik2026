@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Comment Moderator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-ok { color: #10b981; }
+        .stat-spam { color: #f59e0b; }
+        .stat-toxic { color: #ef4444; }
+        .stat-review { color: #8b5cf6; }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-ok {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+        }
+
+        .result-spam {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+
+        .result-toxic {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+        }
+
+        .result-review {
+            background: #ede9fe;
+            border: 2px solid #8b5cf6;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .result-category {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .result-confidence {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .result-reason {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .history-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .history-header h2 {
+            color: #333;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-item {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-spam {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-toxic {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-review {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .history-timestamp {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .history-text {
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .history-reason {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .history-confidence {
+            color: #9ca3af;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Comment Moderator</h1>
+            <p class="subtitle">Автоматическая модерация комментариев с использованием LLM</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Всего проверено</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">OK</div>
+                <div class="stat-value stat-ok" id="stat-ok">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Spam</div>
+                <div class="stat-value stat-spam" id="stat-spam">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toxic</div>
+                <div class="stat-value stat-toxic" id="stat-toxic">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Review</div>
+                <div class="stat-value stat-review" id="stat-review">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">За 24 часа</div>
+                <div class="stat-value" id="stat-24h">0</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Протестировать модерацию</h2>
+            <div class="input-group">
+                <label for="comment-text">Текст комментария</label>
+                <textarea id="comment-text" placeholder="Введите текст комментария для проверки..."></textarea>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" id="moderate-btn" onclick="moderateComment()">Проверить</button>
+                <button class="btn-secondary" onclick="clearTest()">Очистить</button>
+            </div>
+            <div id="result" class="result"></div>
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <h2>История модерации</h2>
+                <div class="filter-group">
+                    <select id="category-filter" onchange="loadHistory()">
+                        <option value="">Все категории</option>
+                        <option value="ok">OK</option>
+                        <option value="spam">Spam</option>
+                        <option value="toxic">Toxic</option>
+                        <option value="needs_review">Needs Review</option>
+                    </select>
+                    <select id="limit-filter" onchange="loadHistory()">
+                        <option value="20">20 записей</option>
+                        <option value="50" selected>50 записей</option>
+                        <option value="100">100 записей</option>
+                    </select>
+                    <button class="btn-secondary" onclick="loadHistory()">Обновить</button>
+                </div>
+            </div>
+            <div id="history-list" class="history-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>Загрузка истории...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Загрузка статистики
+        async function loadStats() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                
+                document.getElementById('stat-total').textContent = data.total_moderated;
+                document.getElementById('stat-ok').textContent = data.by_category.ok || 0;
+                document.getElementById('stat-spam').textContent = data.by_category.spam || 0;
+                document.getElementById('stat-toxic').textContent = data.by_category.toxic || 0;
+                document.getElementById('stat-review').textContent = data.by_category.needs_review || 0;
+                document.getElementById('stat-24h').textContent = data.last_24h;
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Загрузка истории
+        async function loadHistory() {
+            const category = document.getElementById('category-filter').value;
+            const limit = document.getElementById('limit-filter').value;
+            const historyList = document.getElementById('history-list');
+            
+            historyList.innerHTML = '<div class="loading"><div class="spinner"></div><div>Загрузка истории...</div></div>';
+            
+            try {
+                let url = `/history?limit=${limit}`;
+                if (category) {
+                    url += `&category=${category}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.history.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div>История пуста</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                historyList.innerHTML = data.history.map(item => `
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <span class="category-badge badge-${item.category.replace('needs_review', 'review')}">${item.category}</span>
+                            <span class="history-timestamp">${formatTimestamp(item.timestamp)}</span>
+                        </div>
+                        <div class="history-text">${escapeHtml(item.text)}</div>
+                        <div class="history-reason">${escapeHtml(item.reason)}</div>
+                        <div class="history-confidence">Уверенность: ${(item.confidence * 100).toFixed(0)}%</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+                historyList.innerHTML = '<div class="empty-state"><div>Ошибка загрузки истории</div></div>';
+            }
+        }
+
+        // Модерация комментария
+        async function moderateComment() {
+            const text = document.getElementById('comment-text').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('moderate-btn');
+            
+            if (!text) {
+                alert('Введите текст комментария');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const response = await fetch('/moderate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const categoryClass = data.category.replace('needs_review', 'review');
+                    resultDiv.className = `result result-${categoryClass} show`;
+                    resultDiv.innerHTML = `
+                        <div class="result-header">
+                            <span class="result-category">${data.category}</span>
+                            <span class="result-confidence">Уверенность: ${(data.confidence * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="result-reason">${escapeHtml(data.reason)}</div>
+                    `;
+                    
+                    // Обновляем статистику и историю
+                    loadStats();
+                    loadHistory();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Ошибка модерации:', error);
+                alert('Ошибка при отправке запроса');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Проверить';
+            }
+        }
+
+        // Очистка формы
+        function clearTest() {
+            document.getElementById('comment-text').value = '';
+            document.getElementById('result').classList.remove('show');
+        }
+
+        // Форматирование времени
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) {
+                return 'только что';
+            } else if (diff < 3600000) {
+                const minutes = Math.floor(diff / 60000);
+                return `${minutes} мин назад`;
+            } else if (diff < 86400000) {
+                const hours = Math.floor(diff / 3600000);
+                return `${hours} ч назад`;
+            } else {
+                return date.toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        // Экранирование HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Обработка Enter в textarea
+        document.getElementById('comment-text').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                moderateComment();
+            }
+        });
+
+        // Инициализация
+        loadStats();
+        loadHistory();
+        
+        // Автообновление каждые 30 секунд
+        setInterval(() => {
+            loadStats();
+        }, 30000);
+    </script>
+</body>
+</html>
